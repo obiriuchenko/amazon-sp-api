@@ -149,6 +149,11 @@ declare module "amazon-sp-api" {
       options?: DownloadOptions
     ): T;
 
+    downloadStream<T extends ReportDocumentType>(
+      details: ReportDocument,
+      options?: DownloadOptions
+    ): T;
+
     upload<T>(
         details: {
           url: string;
