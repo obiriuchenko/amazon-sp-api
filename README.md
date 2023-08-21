@@ -32,6 +32,7 @@ The client handles calls to the Amazon Selling Partner API. It wraps up all the 
   * [Unsupported endpoints/versions/operations](#unsupported-endpointsversionsoperations)
   * [Grantless operations](#grantless-operations)
   * [Restore rates](#restore-rates)
+  * [Timeouts](#timeouts)
 * [Download, decrypt and unzip reports](#download-decrypt-and-unzip-reports)
 * [Encrypt and upload feeds](#encrypt-and-upload-feeds)
 * [TypeScript Support](#typescript-support)
@@ -135,7 +136,10 @@ The class constructor takes a config object with the following structure as inpu
     use_sandbox:false,
     only_grantless_operations:false,
     user_agent:'amazon-sp-api/<CLIENT_VERSION> (Language=Node.js/<NODE_VERSION>; Platform=<OS_PLATFORM>/<OS_RELEASE>)',
-    debug_log:false
+    debug_log:false,
+    timeouts:{
+      ...
+    }
   }
 }
 ```
@@ -163,6 +167,7 @@ Valid properties of the config options:
 | **only_grantless_operations**<br>*optional* | boolean |                                                 false                                                 | Whether or not to only use grantless operations.                                                                                                                                                                                   |
 | **user_agent**<br>*optional*                | string  | amazon-sp-api/<CLIENT_VERSION> (Language=Node.js/<NODE_VERSION>; Platform=<OS_PLATFORM>/<OS_RELEASE>) | A custom user-agent header ([see desired format in docs](https://developer-docs.amazon.com/amazon-shipping/docs/include-a-user-agent-header-in-all-requests)). |
 | **debug_log**<br>*optional*                 | boolean |                                                 false                                                 | Whether or not the client should print console logs for debugging purposes.                                                                                                                                                        |
+| **timeouts**<br>*optional* | object | -    | Allows to set timeouts for requests. Valid keys are `response`, `idle` and `deadline`. Please see detailed information in the [Timeouts](#timeouts) section. |
 
 ### Exchange an authorization code for a refresh token
 If you already have a refresh token you can skip this step. If you only want to use the API for your own seller account you can just use the [self authorization](https://developer-docs.amazon.com/amazon-shipping/docs/self-authorization) to obtain a valid refresh token.
@@ -229,11 +234,17 @@ All calls to the SP-API will be triggered by using the `.callAPI()` function, wh
   },
   api_path:'<FULL_PATH_OF_OPERATION>',
   method:'GET',
+  headers:{
+    ...
+  },
   restricted_data_token:'<RESTRICTED_DATA_TOKEN>',
   options:{
     version:'<OPERATION_ENDPOINT_VERSION>',
     restore_rate:'<RESTORE_RATE_IN_SECONDS>',
-    raw_result:false
+    raw_result:false,
+    timeouts:{
+      ...
+    }
   }
 }
 ```
@@ -248,6 +259,7 @@ Valid properties of the object:
 | **body**<br>*optional*                  | object |    -    | The input paramaters added to the body of the operation.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | **api_path**<br>*optional*              | string |    -    | The full api path of an operation. Can be used to call operations that are not yet supported or have a new version that is not yet supported by the client.<br>Required if `operation` is not defined.                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | **method**<br>*optional*                | string |    -    | The HTTP method to use.<br>Required only if `api_path` is defined.<br>Must be one of: `GET`, `POST`, `PUT`,`DELETE` or `PATCH`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| **headers**<br>*optional*               | object |    -    | Additional headers that will be added to the call. |
 | **restricted_data_token**<br>*optional* | string |    -    | A token received from a `createRestrictedDataToken` operation. Neccessary to include PII (Personally Identifiable Informaton) for some restricted operations, [see Tokens API use case guide](https://developer-docs.amazon.com/sp-api/docs/tokens-api-use-case-guide) for a list of restricted operations.<br>NOTE: Your developer account must be approved for PII by Amazon in order to be able to receive PII, otherwise the token will have no effect, meaning the result of restricted operations will not include PII. |
 | **options**<br>*optional*               | object |    -    | Additional options, see table below for all possible options properties.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 
@@ -258,6 +270,7 @@ Valid properties of the config options:
 | **version**<br>*optional*      | string  |    -    | The endpoint's version that should be used when calling the operation. Will be preferred over an `endpoints_versions` setting.<br>NOTE: The call might still use an older version of the endpoint if the operation is not available for the specified version and `version_fallback` is set to `true`.                                                                                                                                       |
 | **restore_rate**<br>*optional* | number  |    -    | The restore rate (in seconds) that should be used when calling the operation. Will be preferred over the default restore rate of the operation.                                                                                                                                                                                                                                                                                              |
 | **raw_result**<br>*optional*   | boolean |  false  | Whether or not the client should return the "raw" result, which will include the raw body, buffer chunks, statuscode and headers of the result. This will skip the internal formatting or error checking, but might be helpful when you need additional information besides the payload or when the client encounters JSON.parse errors such as the ones already encountered with old finance documents ([see Known Issues](#known-issues)). |
+| **timeouts**<br>*optional* | object | -    | Allows to set timeouts for requests. Valid keys are `response`, `idle` and `deadline`. Please see detailed information in the [Timeouts](#timeouts) section. |
 
 ### Examples
 
@@ -322,6 +335,35 @@ let res = await sellingPartner.callAPI({
   }
 });
 ```
+```javascript
+try {
+  let res = await sellingPartner.callAPI({
+    operation: 'getCompetitivePricing',
+    endpoint: 'productPricing',
+    query: {
+      Asins: ['B00Z7T970I','B01BHHE9VK'],
+      ItemType: 'Asin',
+      MarketplaceId: 'A1PA6795UKMFR9'
+    },
+    options: {
+      version: 'v0',
+      raw_result: true,
+      timeouts:{
+        response:5000,
+        idle:10000,
+        deadline:30000
+      }
+    }
+  });
+} catch(err) {
+  if (err.code){
+    if (err.code ==='API_RESPONSE_TIMEOUT') console.log('SP-API ERROR: response timeout: ' + err.timeout + 'ms exceeded.',err.message);
+    if (err.code ==='API_IDLE_TIMEOUT') console.log('SP-API ERROR: idle timeout: ' + err.timeout + 'ms exceeded.',err.message);
+    if (err.code ==='API_DEADLINE_TIMEOUT') console.log('SP-API ERROR: deadline timeout: ' + err.timeout + 'ms exceeded.',err.message);
+  } 
+}
+```
+
 NOTE: As the original design of the client (< v0.4.0) didn't keep in mind the possibility of having the exact same operation name for multiple endpoints (i.e. `getShipment`, [see Issue #33](https://github.com/amz-tools/amazon-sp-api/issues/33)) and multiple versions of the same endpoint, we had to replace original operation-only based calls to the API with a new concept that includes endpoints and version-specific operation calls. This concept comes without any breaking changes, so you can still safely upgrade from any version below 0.4.0 to the latest version, but the use of `.callAPI()` without specifying an endpoint is considered deprecated, is discouraged and will trigger a console warning.
 
 ### Endpoints
@@ -460,6 +502,21 @@ If you set the `auto_request_throttled` option in the class constructor config o
 
 NOTE: If you are using the same operation with the same seller account across multiple class instances the restore rate logic might NOT work correct or, even worse, result in an infinite quota exceeded loop. So if you're planning to do that you should probably set `auto_request_throttled` to `false`, catch the `QuotaExceeded` errors and handle the restore rate logic on your own.
 
+### Timeouts
+
+You may set timeouts to stop requests, i.e. to prevent scripts from "hanging" forever because a request is not finishing. The three different timeout types are `response`, `idle` and `deadline`. You may set these inside the class constructor config options to be used for all requests started via `.callAPI()` or via the config options of the `.callAPI()` method for that specific call only. The latter will override the timeouts set via class config options.
+
+NOTE:
+The `.download()` method will NOT use the timeouts defined in class constructor config options. You have to provide the timeouts to each `.download()` call inside its options object.
+
+See the table below for valid properties of the timeouts object:
+
+| Name                           |  Type   | Default | Description                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| :----------------------------- | :-----: | :-----: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **response**<br>*optional* | number | -    | Timeout (in milliseconds) until a response timeout is fired. If exceeded the request will abort with an `API_RESPONSE_TIMEOUT` error. Response timeout is the time between sending the request and receiving the first byte of the response. Includes DNS and connection time. |
+| **idle**<br>*optional* | number | -    | Timeout (in milliseconds) until an idle timeout is fired. if exceeded the request will abort with an `API_IDLE_TIMEOUT` error. Idle is the time between receiving the last chunk of the reponse and waiting for the next chunk to be received. Might be fired if a request is stalled before finished (i.e. when internet connection is lost). |
+| **deadline**<br>*optional* | number | -    | Timeout (in milliseconds) until a deadline timeout is fired. If exceeded the request will abort with an `API_DEADLINE_TIMEOUT` error. Deadline is the time from the start of the request to receiving the response body in full. If the deadline is too short large responses may not load at all on slow connections. |
+
 ## Download, decrypt and unzip reports
 
 The `.download()` function takes the download details (url and encryption details) received from a `getReportDocument` operation as input, downloads the content, unzips it (if result is compressed), decrypts it and returns it.
@@ -493,12 +550,13 @@ let report = await sellingPartner.download(report_document);
 ```
 You may also include an options object as a 2nd parameter to the `.download()` function, i.e. to enable a json result or to additionally save the report to a file. It supports four optional properties:
 
-| Name                      |  Type   | Default | Description                                                                                                                |
-| :------------------------ | :-----: | :-----: | -------------------------------------------------------------------------------------------------------------------------- |
-| **json**<br>*optional*    | boolean |  false  | Whether or not the content should be transformed to json before returning it (from tab delimited flat-file or XML).        |
-| **unzip**<br>*optional*   | boolean |  true   | Whether or not the content should be unzipped before returning it.                                                         |
-| **file**<br>*optional*    | string  |    -    | The absolute file path to save the report to.<br>NOTE: Even when saved to disk the report content is still returned.       |
-| **charset**<br>*optional* | string  |  utf8   | The charset to use for decoding the content.<br>NOTE: Is ignored when content is compressed and `unzip` is set to `false`. |
+| Name                       |  Type   | Default | Description                                                                                                                |
+| :------------------------- | :-----: | :-----: | -------------------------------------------------------------------------------------------------------------------------- |
+| **json**<br>*optional*     | boolean |  false  | Whether or not the content should be transformed to json before returning it (from tab delimited flat-file or XML).        |
+| **unzip**<br>*optional*    | boolean |  true   | Whether or not the content should be unzipped before returning it.                                                         |
+| **file**<br>*optional*     | string  |    -    | The absolute file path to save the report to.<br>NOTE: Even when saved to disk the report content is still returned.       |
+| **charset**<br>*optional*  | string  |  utf8   | The charset to use for decoding the content. If not defined, it uses per default the charset returned in `content-type` header or `utf8` if no charset found in `content-type` header.<br>NOTE: Is ignored when content is compressed and `unzip` is set to `false`. |
+| **timeouts**<br>*optional* | object  | -       | Allows to set timeouts for download requests. Valid keys are `response`, `idle` and `deadline`. Please see detailed information in the [Timeouts](#timeouts) section. |
 
 The following call will download the report, transform it to json and save it to disk:
 ```javascript
@@ -508,10 +566,10 @@ let report = await sellingPartner.download(report_document, {
 });
 ```
 
-Some reports may have an encoding other than UTF-8 and require special decoding with a different charset, i.e. the `GET_MERCHANT_LISTINGS_ALL_DATA` report is encoded as `cp1252`. Proper decoding is possible with passing in the optional charset property:
+Some reports may have an encoding other than UTF-8 and require special decoding with a different charset, i.e. the `GET_MERCHANT_LISTINGS_ALL_DATA` report is encoded as `cp1252` for eu region marketplaces. The right charset to use for decoding is taken from the return header `content-type`, but you may force the use of a specific charset for decoding by passing in the optional charset property:
  ```javascript
 let report = await sellingPartner.download(report_document, {
-  charset:'cp1252'
+  charset:'cp1252' 
 });
 ```
 
@@ -586,14 +644,13 @@ You can easily enable sandbox mode by setting `use_sandbox` in the constructor c
 
 When using the sandbox you have to make sure to use the correct request parameters for the operation you want to test. You can find these inside the api models definitions in the docs by searching the corresponding json file for `x-amzn-api-sandbox`.
 
-For example, this will test the `listCatalogItems` operation in sandbox mode:
+For example, this will test the `getPricing` operation in sandbox mode:
 ```javascript
 let res = await sellingPartner.callAPI({
-  operation:'listCatalogItems',
-  endpoint:'catalogItems',
+  operation:'getPricing',
+  endpoint:'productPricing',
   query:{
-    MarketplaceId:'TEST_CASE_200',
-    SellerSKU:'SKU_200'
+    MarketplaceId:'TEST_CASE_400'
   }
 });
 ```
@@ -604,7 +661,7 @@ Since the Selling Partner API is still pretty new, not all API paths and endpoin
 
 Some operations don't respect the correct restore rate yet, meaning they restore a lot slower than the default restore rate.
 
-Some endpoints might have issues with special charsets like UTF-8. I.e. the `finances` operations return invalid UTF-8 encodings for all data prior to May 2020 resulting in JSON parse errors.
+There is an issue with values of arrays as part of the query, when a value contains a `,`. Due to Amazon expecting array values in query separated by `,` it will wrongfully split up values containing a `,` into two separate values. This is already a [known issue communicated to Amazon](https://github.com/amzn/selling-partner-api-docs/issues/2374).
 
 ## Seller Support
 
