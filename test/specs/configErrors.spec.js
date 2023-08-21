@@ -160,29 +160,6 @@ describe('configErrors', async function(){
     }
   });
 
-  it('should return an invalid sandbox parameters error', async function(){
-    try {
-      let sellingPartner = new SellingPartnerAPI({
-        region:this.config.region,
-        refresh_token:this.config.refresh_token,
-        options:{
-          use_sandbox:true
-        }
-      });
-      await sellingPartner.callAPI({
-        operation:'listCatalogItems',
-        endpoint:'catalogItems',
-        query:{
-          MarketplaceId:'TEST',
-          SellerSKU:'TEST'
-        }
-      });
-    } catch(e){
-      expect(e).to.be.an('error');
-      expect(e.code).to.equal('INVALID_SANDBOX_PARAMETERS');
-    }
-  });
-
   it('should return an invalid refresh token error', async function(){
     try {
       let sellingPartner = new SellingPartnerAPI({
@@ -302,6 +279,95 @@ describe('configErrors', async function(){
       expect(e.code).to.equal('invalid_request');
       expect(e.message).to.equal('The request has an invalid parameter : code');
     }
+  });
+
+  it('should return an invalid security token error', async function(){
+    try {
+      let sellingPartner = new SellingPartnerAPI({
+        region:this.config.region,
+        refresh_token:this.config.refresh_token,
+        options:{
+          auto_request_tokens:false
+        }
+      });
+      await sellingPartner.refreshAccessToken();
+      await sellingPartner.refreshRoleCredentials();
+      let access_token = sellingPartner.access_token;
+      let role_credentials = sellingPartner.role_credentials;
+
+      let sellingPartner2 = new SellingPartnerAPI({
+        region:this.config.region,
+        refresh_token:this.config.refresh_token,
+        access_token:access_token,
+        role_credentials:{
+          id:role_credentials.id,
+          secret:role_credentials.secret,
+          security_token:'InvalidSecurityToken'
+        }
+      });
+      await sellingPartner2.callAPI({
+        operation:'sellers.getMarketplaceParticipations'
+      });
+    } catch(e){
+      expect(e).to.be.an('error');
+      expect(e.code).to.equal('SECURITY_TOKEN_INVALID');
+    }
+  });
+
+  it('should return a response timeout error', async function(){
+    let response_timeout = 5;
+    let res;
+    try {
+      let sellingPartner = new SellingPartnerAPI({
+        region:this.config.region,
+        refresh_token:this.config.refresh_token,
+        options:{
+          version_fallback:false,
+          timeouts:{
+            response:response_timeout
+          }
+        }
+      });
+      res = await sellingPartner.callAPI({
+        operation:'getMarketplaceParticipations',
+        endpoint:'sellers'
+      });
+    } catch(e){
+      res = e;
+    }
+    expect(res).to.be.an('error');
+    expect(res.code).to.equal('API_RESPONSE_TIMEOUT');
+    expect(res.timeout).to.equal(response_timeout);
+  });
+
+  it('should return a deadline timeout error', async function(){
+    let deadline_timeout = 5;
+    let res;
+    try {
+      let sellingPartner = new SellingPartnerAPI({
+        region:this.config.region,
+        refresh_token:this.config.refresh_token,
+        options:{
+          timeouts:{
+            response:10
+          }
+        }
+      });
+      res = await sellingPartner.callAPI({
+        operation:'getMarketplaceParticipations',
+        endpoint:'sellers',
+        options:{
+          timeouts:{
+            deadline:deadline_timeout
+          }
+        }
+      });
+    } catch(e){
+      res = e;
+    }
+    expect(res).to.be.an('error');
+    expect(res.code).to.equal('API_DEADLINE_TIMEOUT');
+    expect(res.timeout).to.equal(deadline_timeout);
   });
 
 });
