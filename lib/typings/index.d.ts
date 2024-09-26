@@ -124,6 +124,8 @@ import {
   ListFinancialEventsByOrderIdResponse,
   ListFinancialEventsQuery,
   ListFinancialEventsResponse,
+  ListTransactionsQuery,
+  ListTransactionsResponse,
 } from './operations/finances'
 import {
   CreateRestrictedDataTokenBody,
@@ -194,6 +196,7 @@ declare module 'amazon-sp-api' {
     | 'listFinancialEventsByGroupId'
     | 'listFinancialEventsByOrderId'
     | 'listFinancialEvents'
+    | 'listTransactions'
     | 'getInboundGuidance'
     | 'updateInboundShipment'
     | 'createInboundShipment'
@@ -259,6 +262,8 @@ declare module 'amazon-sp-api' {
     ? ListFinancialEventsByOrderIdResponse
     : TOperation extends 'listFinancialEvents'
     ? ListFinancialEventsResponse
+    : TOperation extends 'listTransactions'
+    ? ListTransactionsResponse
     : TOperation extends 'getInboundGuidance'
     ? GetInboundGuidanceResponse
     : TOperation extends 'updateInboundShipment'
@@ -341,6 +346,8 @@ declare module 'amazon-sp-api' {
     ? ListFinancialEventsByOrderIdQuery
     : TOperation extends 'listFinancialEvents'
     ? ListFinancialEventsQuery
+    : TOperation extends 'listTransactions'
+    ? ListTransactionsQuery
     : TOperation extends 'getInboundGuidance'
     ? GetInboundGuidanceQuery
     : TOperation extends 'getPreorderInfo'

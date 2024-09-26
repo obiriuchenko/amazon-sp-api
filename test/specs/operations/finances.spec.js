@@ -70,4 +70,18 @@ describe(endpoint, async function(){
     expect(res.FinancialEvents).to.be.a('object');
   });
 
+  it('should return financial transactions for date range', async function(){
+    let res = await this.sellingPartner.callAPI({
+      operation:'listTransactions',
+      endpoint:endpoint,
+      query:{
+        postedBefore:moment().startOf('day').toISOString(),
+        postedAfter:moment().startOf('day').subtract(2, 'months').toISOString(),
+        marketplaceId:this.config.marketplace_id
+      }
+    });
+    expect(res).to.be.a('object');
+    expect(res.transactions).to.be.a('array');
+  });
+
 });

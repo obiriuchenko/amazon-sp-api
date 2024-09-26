@@ -351,3 +351,89 @@ export interface AffordabilityExpenseEvent {
   TaxTypeIGST: Currency;
   TotalExpense?: Currency;
 }
+
+export interface ListTransactionsQuery {
+  postedAfter?: string,
+  postedBefore?: string,
+  marketplaceId?: string,
+  nextToken?: string,
+}
+
+export interface ListTransactionsResponse {
+  nextToken?: string;
+  transactions?: Transaction[];
+}
+
+interface Transaction {
+  sellingPartnerMetadata?: SellingPartnerMetadata;
+  relatedIdentifiers?: RelatedIdentifier[];
+  transactionType?: string; // e.g., 'Shipment'
+  transactionId?: string;
+  transactionStatus?: 'Deferred' | 'Released';
+  description?: string; // e.g., 'Order Payment', 'Refund Order'
+  postedDate?: string; // ISO 8601 date-time format
+  totalAmount?: Currency;
+  marketplaceDetails?: MarketplaceDetails;
+  items?: Item[];
+  contexts?: Context[];
+  breakdowns?: Breakdown[];
+}
+
+interface SellingPartnerMetadata {
+  sellingPartnerId?: string;
+  accountType?: string;
+  marketplaceId?: string;
+}
+
+interface RelatedIdentifier {
+  relatedIdentifierName?: RelatedIdentifierName;
+  relatedIdentifierValue?: string;
+}
+
+type RelatedIdentifierName = 'ORDER_ID' | 'SHIPMENT_ID' | 'EVENT_GROUP_ID' | 'REFUND_ID' | 'INVOICE_ID' | 'DISBURSEMENT_ID' | 'TRANSFER_ID' | 'DEFERRED_TRANSACTION_ID';
+
+interface MarketplaceDetails {
+  marketplaceId?: string;
+  marketplaceName?: string;
+}
+
+interface Item {
+  description?: string;
+  relatedIdentifiers?: ItemRelatedIdentifier[];
+  totalAmount?: Currency;
+  breakdowns?: Breakdown[];
+  contexts?: Context[];
+}
+
+interface ItemRelatedIdentifier {
+  itemRelatedIdentifierName?: ItemRelatedIdentifierName;
+  itemRelatedIdentifierValue?: string;
+}
+
+type ItemRelatedIdentifierName = 'ORDER_ADJUSTMENT_ITEM_ID' | 'COUPON_ID' | 'REMOVAL_SHIPMENT_ITEM_ID' | 'TRANSACTION_ID';
+
+interface Breakdown {
+  breakdownType?: string;
+  breakdownAmount?: Currency;
+  breakdowns?: Breakdown[];
+}
+
+interface Context {
+  contextType: string;
+  storeName?: string;
+  orderType?: string;
+  channel?: string;
+  asin?: string;
+  sku?: string;
+  quantityShipped?: number;
+  fulfillmentNetwork?: string;
+  paymentType?: string;
+  paymentMethod?: string;
+  paymentReference?: string;
+  paymentDate?: string; // ISO 8601 date-time format
+  deferralReason?: string;
+  maturityDate?: string; // ISO 8601 date-time format
+  deferralStatus?: string; // e.g., 'HOLD', 'RELEASE'
+  startTime?: string; // ISO 8601 date-time format
+  endTime?: string; // ISO 8601 date-time format
+}
