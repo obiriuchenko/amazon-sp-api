@@ -1,6 +1,6 @@
-import { BaseResponse, Pagination } from "../baseTypes";
+import type {BaseResponse} from '../baseTypes';
 
-type GranularityType = "Marketplace";
+type GranularityType = 'Marketplace';
 
 export interface GetInventorySummariesQuery {
   details?: boolean;
@@ -13,21 +13,16 @@ export interface GetInventorySummariesQuery {
 }
 
 export interface GetInventorySummariesResponse extends BaseResponse {
-  payload?: GetInventorySummariesResult;
-  pagination: Pagination;
+  granularity?: Granularity;
+  inventorySummaries?: InventorySummary[];
+  nextToken?: string;
 }
-
-interface GetInventorySummariesResult {
-  granularity: Granularity;
-  inventorySummaries: InventorySummary[];
-}
-
-interface Granularity {
+export interface Granularity {
   granularityType?: GranularityType;
   granularityId?: string;
 }
 
-interface InventorySummary {
+export interface InventorySummary {
   asin?: string;
   fnSku?: string;
   sellerSku?: string;
@@ -38,7 +33,7 @@ interface InventorySummary {
   totalQuantity?: number;
 }
 
-interface InventoryDetails {
+export interface InventoryDetails {
   fulfillableQuantity?: number;
   inboundWorkingQuantity?: number;
   inboundShippedQuantity?: number;
@@ -48,29 +43,26 @@ interface InventoryDetails {
   unfulfillableQuantity?: UnfulfillableQuantity;
 }
 
-interface ReservedQuantity {
+export interface ReservedQuantity {
   totalReservedQuantity?: number;
   pendingCustomerOrderQuantity?: number;
   pendingTransshipmentQuantity?: number;
   fcProcessingQuantity?: number;
 }
 
-interface ResearchingQuantity {
+export interface ResearchingQuantity {
   totalResearchingQuantity?: number;
   researchingQuantityBreakdown?: ResearchingQuantityEntry[];
 }
 
-interface ResearchingQuantityEntry {
+export interface ResearchingQuantityEntry {
   name: Name;
   quantity: number;
 }
 
-type Name =
-  | "researchingQuantityInShortTerm"
-  | "researchingQuantityInMidTerm"
-  | "researchingQuantityInLongTerm";
+type Name = 'researchingQuantityInShortTerm' | 'researchingQuantityInMidTerm' | 'researchingQuantityInLongTerm';
 
-interface UnfulfillableQuantity {
+export interface UnfulfillableQuantity {
   totalUnfulfillableQuantity?: number;
   customerDamagedQuantity?: number;
   warehouseDamagedQuantity?: number;
