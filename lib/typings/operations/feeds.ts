@@ -1,10 +1,18 @@
-import { BaseResponse, ProcessingStatus } from "../baseTypes";
+import type {BaseResponse} from '../baseTypes';
+
+const ProcessingStatus = {
+  InQueue: 'IN_QUEUE',
+  InProgress: 'IN_PROGRESS',
+  Done: 'DONE',
+  Cancelled: 'CANCELLED',
+  Fatal: 'FATAL'
+} as const;
 
 export interface GetFeedsQuery {
   feedTypes?: string[];
   marketplaceIds?: string[];
   pageSize?: number;
-  processingStatuses?: ProcessingStatus[];
+  processingStatuses?: (typeof ProcessingStatus)[keyof typeof ProcessingStatus][];
   createdSince?: string;
   createdUntil?: string;
   nextToken?: string;
@@ -20,7 +28,7 @@ interface Feed {
   feedType: string;
   marketplaceIds?: string[];
   createdTime: string;
-  processingStatus: ProcessingStatus;
+  processingStatus: (typeof ProcessingStatus)[keyof typeof ProcessingStatus];
   processingStartTime?: string;
   processingEndTime?: string;
   resultFeedDocumentId?: string;
@@ -38,9 +46,7 @@ interface FeedOptions {
 }
 
 export interface CreateFeedResponse extends BaseResponse {
-  payload?: {
-    feedId: string;
-  };
+  feedId: string;
 }
 
 export interface GetFeedPath {
@@ -68,13 +74,6 @@ export interface CreateFeedDocumentResponse extends BaseResponse {
 interface CreateFeedDocumentResult {
   feedDocumentId: string;
   url: string;
-  encryptionDetails: FeedDocumentEncryptionDetails;
-}
-
-interface FeedDocumentEncryptionDetails {
-  standard: "AES";
-  initializationVector: string;
-  key: string;
 }
 
 export interface GetFeedDocumentPath {
@@ -85,6 +84,6 @@ export interface GetFeedDocumentResponse extends BaseResponse {
   payload?: FeedDocument;
 }
 
-interface FeedDocument extends CreateFeedDocumentResult {
-  compressionAlgorithm?: "GZIP";
+export interface FeedDocument extends CreateFeedDocumentResult {
+  compressionAlgorithm?: 'GZIP';
 }

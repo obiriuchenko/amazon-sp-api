@@ -1,6 +1,6 @@
 {
   "name": "amazon-sp-api",
-  "version": "0.8.1",
+  "version": "1.1.7",
   "description": "Amazon Selling Partner API client",
   "main": "index.js",
   "directories": {
@@ -20,30 +20,32 @@
     "mws",
     "amazon mws"
   ],
-  "author": "Jens Lübberstedt <jens@amz.tools>",
+  "author": "Jens Lübberstedt <jens@florentine.ai>",
   "license": "MIT",
   "dependencies": {
-    "crypto-js": "^4.1.1",
     "csvtojson": "^2.0.10",
-    "fast-xml-parser": "^4.0.9",
+    "fast-xml-parser": "^4.5.0",
     "iconv-lite": "^0.6.3",
-    "qs": "^6.11.0",
+    "qs": "^6.13.1",
     "sax": "^1.2.4"
   },
   "devDependencies": {
-    "@types/node": "^18.7.2",
-    "chai": "^4.3.6",
-    "dotenv": "^16.0.1",
-    "mocha": "^10.0.0",
-    "moment": "^2.29.4"
+    "@types/mocha": "^10.0.9",
+    "@types/node": "^22.9.0",
+    "chai": "^5.1.2",
+    "dotenv": "^16.4.5",
+    "mocha": "^10.8.2",
+    "moment": "^2.30.1",
+    "prettier": "^3.4.2"
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:amz-tools/amazon-sp-api.git"
+    "url": "git@github.com:jrl84/amazon-sp-api.git"
   },
   "scripts": {
-    "test": "mocha --config ./test/.mocharc.js"
+    "test": "mocha --config ./test/.mocharc.js",
+    "format": "npx prettier --write ."
   },
-  "homepage": "https://amz.tools",
+  "homepage": "https://github.com/jrl84/amazon-sp-api",
   "types": "./lib/typings/index.d.ts"
 }
